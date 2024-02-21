@@ -1,0 +1,33 @@
+body {
+	margin: 0;
+}
+
+#blog-heading {
+	min-height: 30vh;
+	background-color: #ffb938;
+	padding: 50px;
+}
+
+#blog-heading > h1 {
+	font-size: 5rem;
+}
+
+#blog {
+	margin-left: 20vw;
+	margin-right: 20vw;
+}
+
+img {
+	max-width: 100%;
+}
+
+@media (max-width: 1000px) {
+	#blog {
+		margin-left: 5vw;
+		margin-right: 5vw;
+	}
+}
+
+* {
+	font-family: Noto Sans;
+}
