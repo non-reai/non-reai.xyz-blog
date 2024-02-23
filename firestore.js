@@ -17,7 +17,7 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const firestoreDb = getFirestore()
+const firestoreDb = getFirestore(app)
 
 export async function readDoc(collectionName, ...queryArgs) {
 	try {
