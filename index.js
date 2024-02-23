@@ -8,7 +8,10 @@ import fs from 'fs'
 import showdown from 'showdown'
 import cookieParser from 'cookie-parser'
 import crypto from 'crypto'
+import dotenv from 'dotenv'
 import { readDoc, writeDoc, whereif } from "./firestore.js"
+
+dotenv.config()
 
 const app = express()
 
