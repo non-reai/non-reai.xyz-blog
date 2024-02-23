@@ -181,5 +181,5 @@ app.use((req, res, next)=>{
 	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
-app.listen(80)
+app.listen(3030)
 
