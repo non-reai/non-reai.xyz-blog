@@ -62,7 +62,7 @@ app.get("/blog/*", async (req, res)=>{
 		return
 	}
 
-	res.redirect("/404")
+	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
 app.use(express.json())
@@ -132,31 +132,31 @@ app.use(async (req, res, next)=>{
 	if (req.cookies.credentials) {
 		let credentials = JSON.parse(req.cookies.credentials)
 		if (!credentials.username || !credentials.password) {
-			res.redirect("/404")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 		
 		let users = await readDoc("users", whereif("username", "==", credentials.username))
 
 		if (!(users.length > 0)) {
-			res.redirect("/404")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 
 		if (users[0].data.isWriter == false) {
-			res.redirect("/404")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 
 		const hash = crypto.createHash("sha256").update(credentials.password).digest("hex")
 
 		if (users[0].data.password != hash) {
-			res.redirect("/404")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 		next()
 	} else {
-		res.redirect("/404")
+		res.sendFile(resolve(__dirname,"public/404/index.html"))
 	}
 })
 
@@ -170,14 +170,15 @@ app.post("/upload-blog", async (req, res)=>{
 		body: req.body.body,
 	}
 	console.log(blogPost)
-	await writeDoc("blog-posts", encodeURI(req.body.title + "-" + date.toDateString()),blogPost)
+	await writeDoc("blog-posts", encodeURI((req.body.title + "-" + date.toDateString().replaceAll(" ", "-"))),blogPost)
 	res.end("uploaded")
 })
 
 app.use(express.static(resolve(__dirname, 'private')))
 
 app.use((req, res, next)=>{
-	res.redirect("/404")
+	res.statusCode = 404
+	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
 app.listen(80)

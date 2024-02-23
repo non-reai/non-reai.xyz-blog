@@ -46,6 +46,7 @@ $("#post").addEventListener("click", async ()=>{
 			"Content-Type": "application/json"
 		}
 	})
+	window.open("/", "_Self")
 })
 
 function createCookie(name,value,days) {
