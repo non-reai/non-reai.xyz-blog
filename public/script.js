@@ -20,7 +20,7 @@ async function getBlogPosts() {
 	const response = await fetch("/blogs")
 	const data = await response.json()
 	$("#blogs").firstElementChild.remove()
-	data.forEach(blogPost=>{
+	data.reverse().forEach(blogPost=>{
 		const blogCard = document.createElement("div")
 		blogCard.classList.add("blog-card")
 		blogCard.innerHTML = `
@@ -29,7 +29,7 @@ async function getBlogPosts() {
 			<h4><span>${blogPost.data.author}</span> - <span>${new Date(blogPost.data.dateCreated.seconds * 1000).toLocaleString(Navigator.language, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span></h4>
 		</div>
 		<div class="body">
-			<p>${toPlainText(blogPost.data.body).substring(0,100)+"..."}</p>
+			<p>${toPlainText(blogPost.data.body).substring(0,300)+"..."}</p>
 			<a href="/blog/${blogPost.id}">Read</a>
 		</div>`
 		$("#blogs").appendChild(blogCard)

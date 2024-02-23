@@ -1,0 +1,45 @@
+body {
+	margin: 0;
+}
+
+#heading {
+	background-color: #ffb938;
+	padding: 50px;
+}
+
+a {
+	display: inline-block;
+	padding: 10px;
+	background-color: #4747ff;
+	color: white;
+	text-decoration: none;
+	font-weight: 600;
+	border-radius: 5px;
+	margin: 50px;
+}
+
+#body {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	min-height: 70vh;
+}
+
+#body > div {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+input {
+	box-sizing: border-box;
+	padding: 10px;
+	font-size: 1.5rem;
+	margin: 10px;
+}
+
+* {
+	font-family: Noto Sans;
+}
