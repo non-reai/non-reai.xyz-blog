@@ -101,11 +101,14 @@ app.post("/signup", async (req, res)=>{
 		return
 	}
 
-	const hash = crypto.createHash("sha256").update(req.body.password).digest("hex")
+	const salt = crypto.randomBytes(64).toString("hex")
+
+	const hash = crypto.createHash("sha256").update(req.body.password+salt).digest("hex")
 
 	await writeDoc("users", req.body.username, {
 		username: req.body.username,
 		password: hash,
+		salt: salt,
 		isWriter: false,
 	})
 	res.cookie("credentials", JSON.stringify({ username: req.body.username, password: req.body.password }), { maxAge: 1000 * 60 * 60 * 24 * 100 })
@@ -127,7 +130,7 @@ app.post("/login", async (req, res)=>{
 		return
 	}
 
-	const hash = crypto.createHash("sha256").update(req.body.password).digest("hex")
+	const hash = crypto.createHash("sha256").update(req.body.password + (users[0].data.salt || "")).digest("hex")
 
 	if (users[0].data.password != hash) {
 		res.statusCode = 401
@@ -161,7 +164,7 @@ app.use(async (req, res, next)=>{
 			return
 		}
 
-		const hash = crypto.createHash("sha256").update(credentials.password).digest("hex")
+		const hash = crypto.createHash("sha256").update(credentials.password + (users[0].data.salt || "")).digest("hex")
 
 		if (users[0].data.password != hash) {
 			res.sendFile(resolve(__dirname,"public/404/index.html"))
