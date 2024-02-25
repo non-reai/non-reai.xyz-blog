@@ -20,6 +20,11 @@ async function getBlogPosts() {
 	const response = await fetch("/blogs")
 	const data = await response.json()
 	$("#blogs").firstElementChild.remove()
+
+	data.sort((a, b)=>{
+		return (b.data.dateCreated.seconds - a.data.dateCreated.seconds)
+	})
+	
 	data.forEach(blogPost=>{
 		const blogCard = document.createElement("div")
 		blogCard.classList.add("blog-card")
