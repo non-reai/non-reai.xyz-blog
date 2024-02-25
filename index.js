@@ -17,6 +17,8 @@ const app = express()
 
 app.use(cookieParser())
 
+showdown.setOption('strikethrough', true);
+
 app.get("/blogs", async (req, res)=>{
 	const limit = req.query.limit || 	100
 	const page = req.query.page || 1
@@ -59,7 +61,7 @@ app.get("/blog/*", async (req, res)=>{
 		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
 		blogHtml = blogHtml.replaceAll("[tags]", blogPost.data.tags.join(" </span><span class=\"tag\">"))
 		blogHtml = blogHtml.replaceAll("[date]", new Date(blogPost.data.dateCreated.seconds * 1000).toISOString())
-
+		
 		let converter = new showdown.Converter()
 		let html = converter.makeHtml(blogPost.data.body)
 
