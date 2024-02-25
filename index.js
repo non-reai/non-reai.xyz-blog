@@ -188,7 +188,13 @@ app.post("/upload-blog", async (req, res)=>{
 		body: req.body.body,
 	}
 	console.log(blogPost)
-	await writeDoc("blog-posts", encodeURI((req.body.title + "-" + date.toDateString().replaceAll(" ", "-"))),blogPost)
+	await writeDoc(
+		"blog-posts", 
+		encodeURI(
+			((req.body.title + "-" + date.toDateString()).replaceAll(" ", "-"))
+		),
+		blogPost
+	)
 	res.end("uploaded")
 })
 
