@@ -48,6 +48,12 @@ app.get("/blog/*", async (req, res)=>{
 		}
 	})
 
+	function convertUnicodeToHtmlSafe(html) {
+		return html.replaceAll(/[\u00A0-\u2666]/g, function(c) {
+			 return '&#'+c.charCodeAt(0)+';';
+		})
+	}
+
 	if (blogPost) {
 		blogHtml = blogHtml.replaceAll("[title]", blogPost.data.title)
 		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
@@ -56,6 +62,10 @@ app.get("/blog/*", async (req, res)=>{
 
 		let converter = new showdown.Converter()
 		let html = converter.makeHtml(blogPost.data.body)
+
+		html = convertUnicodeToHtmlSafe(html)
+
+		console.log(html)
 
 		blogHtml = blogHtml.replaceAll("[body]", html)
 
