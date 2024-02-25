@@ -20,7 +20,7 @@ async function getBlogPosts() {
 	const response = await fetch("/blogs")
 	const data = await response.json()
 	$("#blogs").firstElementChild.remove()
-	data.reverse().forEach(blogPost=>{
+	data.forEach(blogPost=>{
 		const blogCard = document.createElement("div")
 		blogCard.classList.add("blog-card")
 		blogCard.innerHTML = `
