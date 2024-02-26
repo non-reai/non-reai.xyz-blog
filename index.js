@@ -13,6 +13,8 @@ import { readDoc, writeDoc, whereif } from "./firestore.js"
 
 dotenv.config()
 
+const blogCache = {}
+
 const app = express()
 
 app.use(cookieParser())
@@ -25,8 +27,6 @@ app.get("/blogs", async (req, res)=>{
 
 	let blogPosts = await readDoc("blog-posts")
 
-	console.log(blogPosts)
-
 	blogPosts.slice(page * limit,page * limit + limit)
 
 	res.end(JSON.stringify(blogPosts, null, 2))
@@ -34,21 +34,31 @@ app.get("/blogs", async (req, res)=>{
 
 app.get("/blog/*", async (req, res)=>{
 	let blogId = req.url.split("/")[2]
+	let slug = req.url.split("/")[3]
 
+	let blogPost = blogCache[blogId] || null
+	
+	if (!blogPost) {
+		let blogPosts = await readDoc("blog-posts")
+
+		blogPosts.forEach(blogPostQueried=>{
+			if (blogPostQueried.id == blogId) {
+				blogPost = blogPostQueried
+			}
+		})
+		
+		blogCache[blogId] = blogPost
+	}
+	
+	if (!slug || slug != blogPost.data.title.replaceAll(" ","-")) {
+		res.redirect("/blog/"+blogId+"/"+blogPost.data.title.replaceAll(" ","-"))
+		return
+	}
+	
 	let blogHtml = fs.readFileSync(
 		resolve(__dirname,"templates/blog.html"),
 		{ "encoding":"utf-8" }
 	)
-
-	let blogPosts = await readDoc("blog-posts")
-
-	let blogPost = null
-
-	blogPosts.forEach(blogPostQueried=>{
-		if (blogPostQueried.id == blogId) {
-			blogPost = blogPostQueried
-		}
-	})
 
 	function convertUnicodeToHtmlSafe(html) {
 		return html.replaceAll(/[\u00A0-\u2666]/g, function(c) {
@@ -67,16 +77,19 @@ app.get("/blog/*", async (req, res)=>{
 
 		html = convertUnicodeToHtmlSafe(html)
 
-		console.log(html)
-
 		blogHtml = blogHtml.replaceAll("[body]", html)
 
 		res.write(blogHtml)
 		res.end()
 
+		setTimeout(()=>{
+			delete blogCache[blogId]
+		}, 30000)
+
 		return
 	}
-
+	
+	res.statusCode = 404
 	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
@@ -179,8 +192,9 @@ app.use(async (req, res, next)=>{
 })
 
 app.post("/upload-blog", async (req, res)=>{
-	let date = new Date()
-	let blogPost = {
+	const date = new Date() || new Date(req.body.dateCreated)
+	const blogId = Math.random().substring(2,10)
+	const blogPost = {
 		title: req.body.title,
 		author: req.body.author,
 		dateCreated: date,
@@ -190,12 +204,10 @@ app.post("/upload-blog", async (req, res)=>{
 	console.log(blogPost)
 	await writeDoc(
 		"blog-posts", 
-		encodeURI(
-			((req.body.title + "-" + date.toDateString()).replaceAll(" ", "-"))
-		),
+		blogId,
 		blogPost
 	)
-	res.end("uploaded")
+	res.end("Uploaded")
 })
 
 app.use(express.static(resolve(__dirname, 'private')))

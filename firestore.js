@@ -24,6 +24,7 @@ const firestoreDb = getFirestore(app)
 
 export async function readDoc(collectionName, ...queryArgs) {
 	try {
+		console.log("read firestore")
 		const collectionRef = collection(firestoreDb, collectionName)
 		const data = []
 		const q = query(collectionRef, ...queryArgs)
@@ -38,13 +39,13 @@ export async function readDoc(collectionName, ...queryArgs) {
 		})
 		return data
 	} catch (err) {
-		console.log(err)
 		return false
 	}
 }
 
 export async function writeDoc(collectionName, documentId, data) {
 	try {
+		console.log("write firestore")
 		const document = doc(firestoreDb, collectionName, documentId)
 		await setDoc(document, data)
 		return true
