@@ -7,7 +7,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, collection, query, getDocs, getDoc, where} from "firebase/firestore"
 import dotenv from 'dotenv'
 
-dotenv.config({ path: resolve(__dirname, 'a.env') })
+dotenv.config({ path: resolve(__dirname, '.env') })
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -22,8 +22,6 @@ const firebaseConfig = {
 	appId: process.env['APP_ID'],
 	measurementId: process.env['MEASUREMENT_ID']
 };
-
-console.log(process.env)
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
