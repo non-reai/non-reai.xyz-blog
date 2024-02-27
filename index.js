@@ -1,3 +1,8 @@
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 import express from 'express'
 import fs from 'fs'
 import showdown from 'showdown'
@@ -85,7 +90,7 @@ app.get("/blog/*", async (req, res)=>{
 	}
 	
 	res.statusCode = 404
-	res.sendFile("public/404/index.html")
+	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
 app.use(express.json())
@@ -158,31 +163,31 @@ app.use(async (req, res, next)=>{
 	if (req.cookies.credentials) {
 		let credentials = JSON.parse(req.cookies.credentials)
 		if (!credentials.username || !credentials.password) {
-			res.sendFile("public/404/index.html")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 		
 		let users = await readDoc("users", whereif("username", "==", credentials.username))
 
 		if (!(users.length > 0)) {
-			res.sendFile("public/404/index.html")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 
 		if (users[0].data.isWriter == false) {
-			res.sendFile("public/404/index.html")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 
 		const hash = crypto.createHash("sha256").update(credentials.password + (users[0].data.salt || "")).digest("hex")
 
 		if (users[0].data.password != hash) {
-			res.sendFile("public/404/index.html")
+			res.sendFile(resolve(__dirname,"public/404/index.html"))
 			return
 		}
 		next()
 	} else {
-		res.sendFile("public/404/index.html")
+		res.sendFile(resolve(__dirname,"public/404/index.html"))
 	}
 })
 
@@ -209,7 +214,7 @@ app.use(express.static('private'))
 
 app.use((req, res, next)=>{
 	res.statusCode = 404
-	res.sendFile("public/404/index.html")
+	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
 app.listen(3030)
