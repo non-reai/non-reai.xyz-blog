@@ -1,9 +1,13 @@
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, collection, query, getDocs, getDoc, where} from "firebase/firestore"
 import dotenv from 'dotenv'
-import path from 'path'
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') })
+dotenv.config({ path: resolve(__dirname, '../.env') })
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
