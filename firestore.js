@@ -7,7 +7,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, collection, query, getDocs, getDoc, where} from "firebase/firestore"
 import dotenv from 'dotenv'
 
-dotenv.config({ path: resolve(__dirname, '../.env') })
+dotenv.config({ path: resolve(__dirname, 'a.env') })
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
