@@ -193,7 +193,7 @@ app.use(async (req, res, next)=>{
 
 app.post("/upload-blog", async (req, res)=>{
 	const date = new Date() || new Date(req.body.dateCreated)
-	const blogId = Math.random().substring(2,10)
+	const blogId = Math.random().toString().substring(2,10)
 	const blogPost = {
 		title: req.body.title,
 		author: req.body.author,
