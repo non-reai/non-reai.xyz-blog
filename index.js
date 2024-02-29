@@ -66,11 +66,20 @@ app.get("/blog/*", async (req, res)=>{
 			res.redirect("/blog/"+blogId+"/"+encodeURIComponent(blogPost.data.title.replaceAll(" ","-")))
 			return
 		}
+
+		function editsToString(edits) {
+			let finalString = ""
+			edits.forEach((element)=>{
+				finalString += element.author + "</span> @ <span class='edit-date'>" + new Date(element.dateEdited.seconds * 1000).toISOString() + "</span>, <span class='edit-author'>"
+			})
+			return finalString.slice(0,-28)
+		}
 		
 		blogHtml = blogHtml.replaceAll("[title]", blogPost.data.title)
 		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
 		blogHtml = blogHtml.replaceAll("[tags]", blogPost.data.tags.join(" </span><span class=\"tag\">"))
 		blogHtml = blogHtml.replaceAll("[date]", new Date(blogPost.data.dateCreated.seconds * 1000).toISOString())
+		blogHtml = blogHtml.replaceAll("[edits]", blogPost.data.edits ? editsToString(blogPost.data.edits): "")
 		
 		let converter = new showdown.Converter()
 		let html = converter.makeHtml(blogPost.data.body)
@@ -221,21 +230,61 @@ app.use(async (req, res, next)=>{
 })
 
 app.post("/upload-blog", async (req, res)=>{
-	const date = new Date() || new Date(req.body.dateCreated)
-	const blogId = req.body.id || Math.random().toString().substring(2,10)
+	let blogId = req.body.id
+	
+	let blogPost = blogCache[blogId] || null
+	
+	if (!blogPost) {
+		let blogPosts = await readDoc("blog-posts")
 
-	const blogPost = {
+		blogPosts.forEach(blogPostQueried=>{
+			if (blogPostQueried.id == blogId) {
+				blogPost = blogPostQueried
+			}
+		})
+
+		blogCache[blogId] = blogPost
+	}
+
+	if (!blogPost) {
+		blogId = Math.random().toString().substring(2,10)
+	}
+	
+	let blogPostData = {
 		title: req.body.title,
 		author: req.body.author,
-		dateCreated: date,
+		dateCreated: new Date(),
+		edited: false,
+		edits: [],
 		tags: req.body.tags,
 		body: req.body.body,
 	}
-	console.log(blogPost)
+	
+	if (blogPost) {
+		blogPostData = {
+			title: req.body.title,
+			author: req.body.author,
+			dateCreated: blogPost.data.dateCreated,
+			edited: true,
+			edits: blogPost.data.edits ? blogPost.data.edits.concat({
+				author: req.body.author,
+				dateEdited: new Date(),
+			}) : [
+				{
+					author: req.body.author,
+					dateEdited: new Date(),
+				}
+			],
+			tags: req.body.tags,
+			body: req.body.body,
+		}
+	}
+	
+	console.log(blogPostData)
 	await writeDoc(
 		"blog-posts", 
 		blogId,
-		blogPost
+		blogPostData
 	)
 	res.end("Uploaded")
 })

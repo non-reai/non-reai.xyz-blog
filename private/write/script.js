@@ -34,13 +34,6 @@ setInterval(()=>{
 })
 
 $("#post").addEventListener("click", async ()=>{
-	const validationResponse = await fetch("/blog-raw/"+$("#blog-id").value)
-	let canEdit = false
-	
-	if (validationResponse.status == "200") {
-		canEdit = true
-	}
-	
 	const response = await fetch("/upload-blog", {
 		method: "POST",
 		body: JSON.stringify({
@@ -48,7 +41,7 @@ $("#post").addEventListener("click", async ()=>{
 			tags: $("#tags").value.split(",").filter(onlyUnique),
 			author: JSON.parse(decodeURIComponent(readCookie("credentials"))).username,
 			body: simplemde.value(),
-			id: canEdit ? $("#blog-id").value : null
+			id: $("#blog-id").value
 		}),
 		headers: {
 			"Content-Type": "application/json"
