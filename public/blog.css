@@ -39,8 +39,29 @@ pre, code {
 	padding: 5px;
 }
 
-pre > code {
+code {
 	border: none;
+	font-family:  "Sans Mono", "Consolas", "Courier", monospace;
+}
+
+span[class^='hljs-'], span[class*='hljs-']{
+	font-family:  "Sans Mono", "Consolas", "Courier", monospace;
+}
+
+.hljs-keyword {
+	color: #1a21ff;
+}
+
+.hljs-string {
+	color: #d936d3;
+}
+
+.hljs-comment {
+	color: #0da00f;
+}
+
+.hljs-built_in {
+	color: #1b9fa1;
 }
 
 @media (max-width: 1000px) {

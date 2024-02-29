@@ -50,11 +50,6 @@ app.get("/blog/*", async (req, res)=>{
 		blogCache[blogId] = blogPost
 	}
 	
-	if (!slug || slug != blogPost.data.title.replaceAll(" ","-")) {
-		res.redirect("/blog/"+blogId+"/"+blogPost.data.title.replaceAll(" ","-"))
-		return
-	}
-	
 	let blogHtml = fs.readFileSync(
 		"templates/blog.html",
 		{ "encoding":"utf-8" }
@@ -67,6 +62,11 @@ app.get("/blog/*", async (req, res)=>{
 	}
 
 	if (blogPost) {
+		if (!slug || slug != encodeURIComponent(blogPost.data.title.replaceAll(" ","-")) ) {
+			res.redirect("/blog/"+blogId+"/"+encodeURIComponent(blogPost.data.title.replaceAll(" ","-")))
+			return
+		}
+		
 		blogHtml = blogHtml.replaceAll("[title]", blogPost.data.title)
 		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
 		blogHtml = blogHtml.replaceAll("[tags]", blogPost.data.tags.join(" </span><span class=\"tag\">"))
@@ -74,6 +74,8 @@ app.get("/blog/*", async (req, res)=>{
 		
 		let converter = new showdown.Converter()
 		let html = converter.makeHtml(blogPost.data.body)
+
+		console.log(html)
 
 		html = convertUnicodeToHtmlSafe(html)
 
@@ -91,6 +93,33 @@ app.get("/blog/*", async (req, res)=>{
 	
 	res.statusCode = 404
 	res.sendFile(resolve(__dirname,"public/404/index.html"))
+})
+
+app.get("/blog-raw/*", async (req, res)=>{
+	let blogId = req.url.split("/")[2]
+
+	let blogPost = blogCache[blogId] || null
+
+	if (!blogPost) {
+		let blogPosts = await readDoc("blog-posts")
+
+		blogPosts.forEach(blogPostQueried=>{
+			if (blogPostQueried.id == blogId) {
+				blogPost = blogPostQueried
+			}
+		})
+
+		blogCache[blogId] = blogPost
+	}
+
+	if (blogPost) {
+		res.write(JSON.stringify(blogPost, null, 2))
+		res.end()
+		return
+	}
+
+	res.statusCode = 404
+	res.end()
 })
 
 app.use(express.json())
@@ -193,7 +222,8 @@ app.use(async (req, res, next)=>{
 
 app.post("/upload-blog", async (req, res)=>{
 	const date = new Date() || new Date(req.body.dateCreated)
-	const blogId = Math.random().toString().substring(2,10)
+	const blogId = req.body.id || Math.random().toString().substring(2,10)
+
 	const blogPost = {
 		title: req.body.title,
 		author: req.body.author,

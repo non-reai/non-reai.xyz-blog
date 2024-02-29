@@ -34,6 +34,13 @@ setInterval(()=>{
 })
 
 $("#post").addEventListener("click", async ()=>{
+	const validationResponse = await fetch("/blog-raw/"+$("#blog-id").value)
+	let canEdit = false
+	
+	if (validationResponse.status == "200") {
+		canEdit = true
+	}
+	
 	const response = await fetch("/upload-blog", {
 		method: "POST",
 		body: JSON.stringify({
@@ -41,12 +48,24 @@ $("#post").addEventListener("click", async ()=>{
 			tags: $("#tags").value.split(",").filter(onlyUnique),
 			author: JSON.parse(decodeURIComponent(readCookie("credentials"))).username,
 			body: simplemde.value(),
+			id: canEdit ? $("#blog-id").value : null
 		}),
 		headers: {
 			"Content-Type": "application/json"
 		}
 	})
 	window.open("/", "_Self")
+})
+
+$("#load").addEventListener("click", async ()=>{
+	const response = await fetch("/blog-raw/"+$("#blog-id").value)
+
+	if (response.status == "200") {
+		const json = await response.json()
+		simplemde.value(json.data.body)
+		$("#title").value = json.data.title
+		$("#tags").value = json.data.tags.join(",")
+	}
 })
 
 function createCookie(name,value,days) {
