@@ -32,10 +32,12 @@ app.get("/blogs", async (req, res)=>{
 	res.end(JSON.stringify(blogPosts, null, 2))
 })
 
-app.get("/blog/*", async (req, res)=>{
-	let blogId = req.url.split("/")[2]
-	let slug = req.url.split("/")[3]
+app.get("/blog/:blogId/:slug?", async (req, res)=>{
+	let blogId = req.params.blogId
+	let slug = req.params.slug
 
+	console.log(blogId, slug)
+	
 	let blogPost = blogCache[blogId] || null
 	
 	if (!blogPost) {
@@ -62,7 +64,7 @@ app.get("/blog/*", async (req, res)=>{
 	}
 
 	if (blogPost) {
-		if (!slug || slug != encodeURIComponent(blogPost.data.title.replaceAll(" ","-")) ) {
+		if (!slug || slug != blogPost.data.title.replaceAll(" ","-")) {
 			res.redirect("/blog/"+blogId+"/"+encodeURIComponent(blogPost.data.title.replaceAll(" ","-")))
 			return
 		}
@@ -104,8 +106,8 @@ app.get("/blog/*", async (req, res)=>{
 	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
 
-app.get("/blog-raw/*", async (req, res)=>{
-	let blogId = req.url.split("/")[2]
+app.get("/blog-raw/:blogId", async (req, res)=>{
+	let blogId = req.params.blogId
 
 	let blogPost = blogCache[blogId] || null
 
