@@ -13,8 +13,6 @@ import { readDoc, writeDoc, whereif } from "./firestore.js"
 
 dotenv.config()
 
-const blogCache = {}
-
 const app = express()
 
 app.use(cookieParser())
@@ -32,26 +30,30 @@ app.get("/blogs", async (req, res)=>{
 	res.end(JSON.stringify(blogPosts, null, 2))
 })
 
+app.get("/blog/:blogId/:slug?/comments", async (req, res)=>{
+	let blogId = req.params.blogId
+
+	const comments = await readDoc("comments", whereif("blogId", "==", blogId))
+	res.write(JSON.stringify(comments))
+	res.end()
+})
+
 app.get("/blog/:blogId/:slug?", async (req, res)=>{
 	let blogId = req.params.blogId
 	let slug = req.params.slug
 
 	console.log(blogId, slug)
-	
-	let blogPost = blogCache[blogId] || null
-	
-	if (!blogPost) {
-		let blogPosts = await readDoc("blog-posts")
 
-		blogPosts.forEach(blogPostQueried=>{
-			if (blogPostQueried.id == blogId) {
-				blogPost = blogPostQueried
-			}
-		})
-		
-		blogCache[blogId] = blogPost
-	}
+	let blogPost = null
 	
+	let blogPosts = await readDoc("blog-posts")
+
+	blogPosts.forEach(blogPostQueried=>{
+		if (blogPostQueried.id == blogId) {
+			blogPost = blogPostQueried
+		}
+	})
+
 	let blogHtml = fs.readFileSync(
 		"templates/blog.html",
 		{ "encoding":"utf-8" }
@@ -76,17 +78,15 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 			})
 			return finalString.slice(0,-28)
 		}
-		
+
 		blogHtml = blogHtml.replaceAll("[title]", blogPost.data.title)
 		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
 		blogHtml = blogHtml.replaceAll("[tags]", blogPost.data.tags.join(" </span><span class=\"tag\">"))
 		blogHtml = blogHtml.replaceAll("[date]", new Date(blogPost.data.dateCreated.seconds * 1000).toISOString())
 		blogHtml = blogHtml.replaceAll("[edits]", blogPost.data.edits ? editsToString(blogPost.data.edits): "")
-		
+
 		let converter = new showdown.Converter()
 		let html = converter.makeHtml(blogPost.data.body)
-
-		console.log(html)
 
 		html = convertUnicodeToHtmlSafe(html)
 
@@ -95,13 +95,9 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 		res.write(blogHtml)
 		res.end()
 
-		setTimeout(()=>{
-			delete blogCache[blogId]
-		}, 30000)
-
 		return
 	}
-	
+
 	res.statusCode = 404
 	res.sendFile(resolve(__dirname,"public/404/index.html"))
 })
@@ -109,19 +105,15 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 app.get("/blog-raw/:blogId", async (req, res)=>{
 	let blogId = req.params.blogId
 
-	let blogPost = blogCache[blogId] || null
+	let blogPost = null
+	
+	let blogPosts = await readDoc("blog-posts")
 
-	if (!blogPost) {
-		let blogPosts = await readDoc("blog-posts")
-
-		blogPosts.forEach(blogPostQueried=>{
-			if (blogPostQueried.id == blogId) {
-				blogPost = blogPostQueried
-			}
-		})
-
-		blogCache[blogId] = blogPost
-	}
+	blogPosts.forEach(blogPostQueried=>{
+		if (blogPostQueried.id == blogId) {
+			blogPost = blogPostQueried
+		}
+	})
 
 	if (blogPost) {
 		res.write(JSON.stringify(blogPost, null, 2))
@@ -160,7 +152,7 @@ app.post("/signup", async (req, res)=>{
 
 	const hash = crypto.createHash("sha256").update(req.body.password+salt).digest("hex")
 
-	await writeDoc("users", req.body.username, {
+	await writeDoc("users", req.body.username.toLowerCase(), {
 		username: req.body.username,
 		password: hash,
 		salt: salt,
@@ -177,7 +169,7 @@ app.post("/login", async (req, res)=>{
 		return
 	}
 
-	let users = await readDoc("users", whereif("username", "==", req.body.username))
+	let users = await readDoc("users", whereif("username", "==", req.body.username.toLowerCase()))
 
 	if (!users.length > 0) {
 		res.statusCode = 404
@@ -199,54 +191,91 @@ app.post("/login", async (req, res)=>{
 
 app.use(express.static('public'))
 
+// Below is logged-in only
+
 app.use(async (req, res, next)=>{
 	if (req.cookies.credentials) {
 		let credentials = JSON.parse(req.cookies.credentials)
 		if (!credentials.username || !credentials.password) {
-			res.sendFile(resolve(__dirname,"public/404/index.html"))
+			res.statusCode = 401
+			res.end()
 			return
 		}
 		
-		let users = await readDoc("users", whereif("username", "==", credentials.username))
+		let users = await readDoc("users", whereif("username", "==", credentials.username.toLowerCase()))
 
 		if (!(users.length > 0)) {
-			res.sendFile(resolve(__dirname,"public/404/index.html"))
-			return
-		}
-
-		if (users[0].data.isWriter == false) {
-			res.sendFile(resolve(__dirname,"public/404/index.html"))
+			res.statusCode = 401
+			res.end()
 			return
 		}
 
 		const hash = crypto.createHash("sha256").update(credentials.password + (users[0].data.salt || "")).digest("hex")
 
 		if (users[0].data.password != hash) {
-			res.sendFile(resolve(__dirname,"public/404/index.html"))
+			res.statusCode = 401
+			res.end()
 			return
 		}
 		next()
 	} else {
-		res.sendFile(resolve(__dirname,"public/404/index.html"))
+		res.statusCode = 401
+		res.end()
 	}
 })
 
+app.post('/upload-comment',async (req,res)=>{
+	let credentials = JSON.parse(req.cookies.credentials)
+	let commentId = Math.random().toString().substring(2,18)
+
+	const commentData = {
+		author: credentials.username,
+		body: req.body.body,
+		dateCreated: new Date(),
+		blogId: req.body.blogId,
+		parentComment: req.body.parentComment
+	}
+
+	console.log(commentData)
+	
+	await writeDoc(
+		"comments", 
+		commentId,
+		commentData
+	)
+
+	res.end(commentId)
+})
+
+// Below is writers only.
+
+app.use(async (req, res, next)=>{
+	let credentials = JSON.parse(req.cookies.credentials)
+		
+	let users = await readDoc("users", whereif("username", "==", credentials.username.toLowerCase()))
+
+	if (users[0].data.isWriter == false) {
+		res.statusCode = 403
+		res.end()
+		return
+	}
+	next()
+})
+
 app.post("/upload-blog", async (req, res)=>{
+	let credentials = JSON.parse(req.cookies.credentials)
+	
 	let blogId = req.body.id
 	
-	let blogPost = blogCache[blogId] || null
+	let blogPost = null
 	
-	if (!blogPost) {
-		let blogPosts = await readDoc("blog-posts")
+	let blogPosts = await readDoc("blog-posts")
 
-		blogPosts.forEach(blogPostQueried=>{
-			if (blogPostQueried.id == blogId) {
-				blogPost = blogPostQueried
-			}
-		})
-
-		blogCache[blogId] = blogPost
-	}
+	blogPosts.forEach(blogPostQueried=>{
+		if (blogPostQueried.id == blogId) {
+			blogPost = blogPostQueried
+		}
+	})
 
 	if (!blogPost) {
 		blogId = Math.random().toString().substring(2,10)
@@ -254,7 +283,7 @@ app.post("/upload-blog", async (req, res)=>{
 	
 	let blogPostData = {
 		title: req.body.title,
-		author: req.body.author,
+		author: credentials.username,
 		dateCreated: new Date(),
 		edited: false,
 		edits: [],
@@ -265,15 +294,15 @@ app.post("/upload-blog", async (req, res)=>{
 	if (blogPost) {
 		blogPostData = {
 			title: req.body.title,
-			author: req.body.author,
+			author:  blogPost.data.author,
 			dateCreated: blogPost.data.dateCreated,
 			edited: true,
 			edits: blogPost.data.edits ? blogPost.data.edits.concat({
-				author: req.body.author,
+				author: credentials.username,
 				dateEdited: new Date(),
 			}) : [
 				{
-					author: req.body.author,
+					author: credentials.username,
 					dateEdited: new Date(),
 				}
 			],
@@ -288,7 +317,7 @@ app.post("/upload-blog", async (req, res)=>{
 		blogId,
 		blogPostData
 	)
-	res.end("Uploaded")
+	res.end(blogId)
 })
 
 app.use(express.static('private'))

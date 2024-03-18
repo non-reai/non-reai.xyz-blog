@@ -1,8 +1,22 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>blog</title>
-		<meta charset="UTF-8">
+		<title>[title] | Non_Reai's blogs</title>
+		<meta name="title" content="[title] | Non_Reai's blogs" />
+		<meta name="description" content="blog post" />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://blog.non-reai.xyz/" />
+		<meta property="og:title" content="[title] | Non_Reai's blogs" />
+		<meta property="og:description" content="blog post" />
+		
+		<!-- Twitter -->
+		<!-- <meta property="twitter:card" content="summary_large_image" /> -->
+		<meta property="twitter:url" content="https://blog.non-reai.xyz/" />
+		<meta property="twitter:title" content="[title] | Non_Reai's blogs" />
+		<meta property="twitter:description" content="blog post" />
+		
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 		<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
@@ -17,14 +31,34 @@
 		<link href="/blog.css" rel="stylesheet">
 	</head>
 	<body>
+		<nav>
+			<a href="/">blog.non-reai.xyz</a>
+			<a href="https://non-reai.xyz">Homepage</a>
+		</nav>
 		<div id="blog-heading">
 			<h1>[title]</h1>
 			<h3><span>[author]</span> @ <span id="date">[date]</span></h3>
-			<h3>Edits: <span class="edit-author">[edits]</span></h3>
+			<h3 id="edits">Edits: <span class="edit-author">[edits]</span></h3>
 			<h3><span class="tag">[tags]</span></h3>
 		</div>
 		<div id="blog">
 			[body]
+		</div>
+		<div id="comments">
+			<h1>Comments</h1>
+			<h3 id="comment-replyto"></h3>
+			<input class="comment-input" placeholder="Leave a comment">
+			<a id="comment-post-button" type="button" class="button">Post</a>
+			<!-- <div class="comment">
+				<h2>Non_reai<span class="comment-date">3/16/2024, 10:07:17 PM</span></h2>
+				<div>
+					<p>test comment</p>
+					<div class="comment-interact-bar">
+						<a>Upvote</a><a>Downvote</a><a>Reply</a>
+					</div>
+					
+				</div>
+			</div> -->
 		</div>
 		<script src="/blog.js"></script>
 	</body>

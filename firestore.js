@@ -18,6 +18,8 @@ const firebaseConfig = {
 	measurementId: process.env['MEASUREMENT_ID']
 };
 
+const databaseCache = {}
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const firestoreDb = getFirestore(app)
@@ -25,6 +27,7 @@ const firestoreDb = getFirestore(app)
 export async function readDoc(collectionName, ...queryArgs) {
 	try {
 		console.log("read firestore")
+		
 		const collectionRef = collection(firestoreDb, collectionName)
 		const data = []
 		const q = query(collectionRef, ...queryArgs)
@@ -39,7 +42,7 @@ export async function readDoc(collectionName, ...queryArgs) {
 		})
 		return data
 	} catch (err) {
-		return false
+		return err.toString()
 	}
 }
 

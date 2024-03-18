@@ -6,7 +6,7 @@ $("#submit").addEventListener("click", async ()=>{
 	const response = await fetch("/signup", {
 		method: "POST",
 		body: JSON.stringify({
-			username: $("#username").value.toLowerCase(),
+			username: $("#username").value,
 			password: $("#password").value
 		}),
 		headers: {

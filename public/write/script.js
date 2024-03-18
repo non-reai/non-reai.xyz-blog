@@ -39,7 +39,7 @@ $("#post").addEventListener("click", async ()=>{
 		body: JSON.stringify({
 			title: $("#title").value,
 			tags: $("#tags").value.split(",").filter(onlyUnique),
-			author: JSON.parse(decodeURIComponent(readCookie("credentials"))).username,
+			// author: JSON.parse(decodeURIComponent(readCookie("credentials"))).username,
 			body: simplemde.value(),
 			id: $("#blog-id").value
 		}),
