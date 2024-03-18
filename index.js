@@ -219,8 +219,8 @@ app.use(async (req, res, next)=>{
 		}
 		next()
 	} else {
-		res.statusCode = 401
-		res.end()
+		res.statusCode = 404
+		res.sendFile(resolve(__dirname,"public/404/index.html"))
 	}
 })
 
