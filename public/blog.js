@@ -66,6 +66,8 @@ function createComment(comment) {
 	reply.addEventListener('click', ()=>{
 		replyingTo = comment.id
 		$("#comment-replyto").innerText = "Replying to "+comment.data.author
+		$("#comment-replyto-content").innerText = comment.data.body
+		$(".comment-input").focus()
 	})
 
 	return true
@@ -74,6 +76,7 @@ function createComment(comment) {
 $("#comment-replyto").addEventListener('click', ()=>{
 	replyingTo = null
 	$("#comment-replyto").innerText = ""
+	$("#comment-replyto-content").innerText = ""
 })
 
 $("#comment-post-button").addEventListener('click', async ()=>{
@@ -100,7 +103,7 @@ $("#comment-post-button").addEventListener('click', async ()=>{
 	replyingTo = null
 	$("#comment-replyto").innerText = ""
 	$(".comment-input").value = ""
-	
+	$("#comment-replyto-content").innerText = ""
 })
 
 async function getComments() {
