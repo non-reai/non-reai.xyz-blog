@@ -12,6 +12,22 @@ if ($("#edits").innerText == "Edits:") {
 	$("#edits").remove()
 }
 
+let user = null
+
+async function getUser() {
+	const response = await fetch("/user")
+	if (response.status == 200) {
+		user = await response.json()
+	}
+}
+
+getUser().then(()=>{
+	if (!user) {
+		$("#comment-post-button").classList.add("disabled")
+	}
+	getComments()
+})
+
 //comments
 
 let replyingTo = null
@@ -33,12 +49,13 @@ function createComment(comment) {
 
 	const author = document.createElement("h2")
 	author.innerText = comment.data.author
+	author.classList.add("user-replace")
 	container.appendChild(author)
 
 	const dateCreated = document.createElement("span")
 	dateCreated.innerText = new Date(comment.data.dateCreated.seconds * 1000).toLocaleString()
 	dateCreated.classList.add("comment-date")
-	author.appendChild(dateCreated)
+	container.appendChild(dateCreated)
 
 	const content = document.createElement("div")
 	container.appendChild(content)
@@ -51,17 +68,69 @@ function createComment(comment) {
 	interact.classList.add("comment-interact-bar")
 	content.appendChild(interact)
 
-	// const upvote = document.createElement("a")
-	// upvote.innerText = "Upvote"
-	// interact.appendChild(upvote)
+	if (!user) {
+		const karma = document.createElement("span")
+		karma.innerText = comment.data.karma.upvotes.length - comment.data.karma.downvotes.length
+		interact.appendChild(karma)
 
-	// const downvote = document.createElement("a")
-	// downvote.innerText = "Downvote"
-	// interact.appendChild(downvote)
+		return true
+	}
+
+	const upvote = document.createElement("a")
+	upvote.innerText = "Upvote"
+	interact.appendChild(upvote)
+
+	const karma = document.createElement("span")
+	karma.innerText = comment.data.karma.upvotes.length - comment.data.karma.downvotes.length
+	interact.appendChild(karma)
+
+	const downvote = document.createElement("a")
+	downvote.innerText = "Downvote"
+	interact.appendChild(downvote)
 
 	const reply = document.createElement("a")
 	reply.innerText = "Reply"
 	interact.appendChild(reply)
+
+	if (comment.data.karma.upvotes.includes(user.id)) {
+		upvote.classList.add("karma-voted")
+		downvote.classList.remove("karma-voted")
+	} else if (comment.data.karma.downvotes.includes(user.id)) {
+		downvote.classList.add("karma-voted")
+		upvote.classList.remove("karma-voted")
+	}
+
+	upvote.addEventListener('click', async ()=>{
+		if (upvote.classList.contains("karma-voted")) {
+			upvote.classList.remove("karma-voted")
+			karma.innerText = parseInt(karma.innerText) - 1
+		
+			await fetch("/"+comment.id+"/unvote")
+		} else {
+			upvote.classList.add("karma-voted")
+			downvote.classList.remove("karma-voted")
+			karma.innerText = parseInt(karma.innerText) + 1
+
+			await fetch("/"+comment.id+"/unvote")
+			await fetch("/"+comment.id+"/upvote")
+		}
+	})
+
+	downvote.addEventListener('click', async ()=>{
+		if (downvote.classList.contains("karma-voted")) {
+			downvote.classList.remove("karma-voted")
+			karma.innerText = parseInt(karma.innerText) + 1
+		
+			await fetch("/"+comment.id+"/unvote")
+		} else {
+			downvote.classList.add("karma-voted")
+			upvote.classList.remove("karma-voted")
+			karma.innerText = parseInt(karma.innerText) - 1
+
+			await fetch("/"+comment.id+"/unvote")
+			await fetch("/"+comment.id+"/downvote")
+		}
+	})
 
 	reply.addEventListener('click', ()=>{
 		replyingTo = comment.id
@@ -107,6 +176,7 @@ $("#comment-post-button").addEventListener('click', async ()=>{
 })
 
 async function getComments() {
+	
 	const response = await fetch("comments")
 	const comments = await response.json()
 
@@ -137,4 +207,24 @@ async function getComments() {
 	}
 }
 
-getComments()
+
+// get users
+
+async function getUsers() {
+	const response = await fetch("/users")
+	const users = await response.json()
+
+	setInterval(()=>{
+		
+		document.querySelectorAll(".user-replace").forEach(element=>{
+			let user = users.find(user => {
+				return user.id == element.innerText
+			})
+			if (user) {
+				element.innerText = user.data.username
+			}
+		})
+	},100)
+}
+
+getUsers()

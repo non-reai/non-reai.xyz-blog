@@ -55,6 +55,10 @@ body {
 	border-bottom: solid rgba(0,0,0,0.8) 1px;
 }
 
+.comment > h2 {
+	display: inline-block;
+}
+
 .comment > div {
 	border-left: 8px solid #ffb938;
 	padding: 5px;
@@ -78,7 +82,18 @@ body {
 	cursor: pointer;
 }
 
+.comment-interact-bar > span {
+  font-size: 0.8rem;
+	margin-right: 10px;
+	margin-left: 10px;
+	font-weight: 700;
+}
+
 .comment-interact-bar > a:hover {
+  font-weight: 700;
+}
+
+.karma-voted {
   font-weight: 700;
 }
 
@@ -87,6 +102,12 @@ body {
 	margin-right: 10px;
 	margin-left: 10px;
 	font-weight: 700;
+}
+
+.comment-interact-bar > a:first-child:after {
+  content: '';
+	margin-right: 0;
+	margin-left: 0;
 }
 
 .comment-interact-bar > a:last-child:after {
@@ -132,6 +153,13 @@ body {
 	margin: 50px;
 	margin-top: -5px;
 	cursor: pointer;
+	user-select: none;
+}
+
+.disabled {
+	background-color: #353597;
+	color: #b0b0b0;
+	cursor: not-allowed;
 }
 
 .tag {

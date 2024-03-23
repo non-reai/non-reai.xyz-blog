@@ -17,7 +17,7 @@ async function getBlogPosts() {
 		blogCard.innerHTML = `
 		<div class="head">
 			<h1>${blogPost.data.title}</h1>
-			<h4><span>${blogPost.data.author}</span> - <span>${new Date(blogPost.data.dateCreated.seconds * 1000).toLocaleString(Navigator.language, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span></h4>
+			<h4><span class="user-replace">${blogPost.data.author}</span> - <span>${new Date(blogPost.data.dateCreated.seconds * 1000).toLocaleString(Navigator.language, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span></h4>
 		</div>
 		<div class="body">
 			<p></p>
@@ -29,3 +29,23 @@ async function getBlogPosts() {
 }
 
 getBlogPosts()
+
+// get users
+
+async function getUsers() {
+	const response = await fetch("/users")
+	const users = await response.json()
+
+	setInterval(()=>{
+		document.querySelectorAll(".user-replace").forEach(element=>{
+			let user = users.find(user => {
+				return user.id == element.innerText
+			})
+			if (user) {
+				element.innerText = user.data.username
+			}
+		})
+	},100)
+}
+
+getUsers()

@@ -26,8 +26,6 @@ const firestoreDb = getFirestore(app)
 
 export async function readDoc(collectionName, ...queryArgs) {
 	try {
-		console.log("read firestore")
-		
 		const collectionRef = collection(firestoreDb, collectionName)
 		const data = []
 		const q = query(collectionRef, ...queryArgs)
@@ -40,19 +38,22 @@ export async function readDoc(collectionName, ...queryArgs) {
 				data: doc.data()
 			})
 		})
+		console.log("read firestore")
 		return data
 	} catch (err) {
+		console.log("error read firestore")
 		return err.toString()
 	}
 }
 
 export async function writeDoc(collectionName, documentId, data) {
 	try {
-		console.log("write firestore")
 		const document = doc(firestoreDb, collectionName, documentId)
 		await setDoc(document, data)
+		console.log("write firestore")
 		return true
 	} catch (err) {
+		console.log("error write firestore: "+err)
 		return false
 	}
 }
