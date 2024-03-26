@@ -3,7 +3,7 @@ const $ = (...query) => {
 }
 
 $("#submit").addEventListener("click", async ()=>{
-	const response = await fetch("/login", {
+	const response = await fetch("/api/users/login", {
 		method: "POST",
 		body: JSON.stringify({
 			username: $("#username").value,

@@ -34,7 +34,7 @@ setInterval(()=>{
 })
 
 $("#post").addEventListener("click", async ()=>{
-	const response = await fetch("/upload-blog", {
+	const response = await fetch("/api/blogs/upload-blog", {
 		method: "POST",
 		body: JSON.stringify({
 			title: $("#title").value,

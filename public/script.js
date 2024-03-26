@@ -3,7 +3,7 @@ const $ = (...query) => {
 }
 
 async function getBlogPosts() {
-	const response = await fetch("/blogs")
+	const response = await fetch("/api/blogs")
 	const data = await response.json()
 	$("#blogs").firstElementChild.remove()
 
@@ -33,7 +33,7 @@ getBlogPosts()
 // get users
 
 async function getUsers() {
-	const response = await fetch("/users")
+	const response = await fetch("/api/users")
 	const users = await response.json()
 
 	setInterval(()=>{

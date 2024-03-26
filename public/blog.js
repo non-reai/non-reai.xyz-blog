@@ -15,7 +15,7 @@ if ($("#edits").innerText == "Edits:") {
 let user = null
 
 async function getUser() {
-	const response = await fetch("/user")
+	const response = await fetch("/api/users/self")
 	if (response.status == 200) {
 		user = await response.json()
 	}
@@ -105,14 +105,19 @@ function createComment(comment) {
 			upvote.classList.remove("karma-voted")
 			karma.innerText = parseInt(karma.innerText) - 1
 		
-			await fetch("/"+comment.id+"/unvote")
+			await fetch("/api/comments/"+comment.id+"/unvote")
 		} else {
 			upvote.classList.add("karma-voted")
+
+			if (downvote.classList.contains("karma-voted")) {
+				karma.innerText = parseInt(karma.innerText) + 1
+			}
+			
 			downvote.classList.remove("karma-voted")
 			karma.innerText = parseInt(karma.innerText) + 1
 
-			await fetch("/"+comment.id+"/unvote")
-			await fetch("/"+comment.id+"/upvote")
+			await fetch("/api/comments/"+comment.id+"/unvote")
+			await fetch("/api/comments/"+comment.id+"/upvote")
 		}
 	})
 
@@ -121,14 +126,19 @@ function createComment(comment) {
 			downvote.classList.remove("karma-voted")
 			karma.innerText = parseInt(karma.innerText) + 1
 		
-			await fetch("/"+comment.id+"/unvote")
+			await fetch("/api/comments/"+comment.id+"/unvote")
 		} else {
 			downvote.classList.add("karma-voted")
+			
+			if (upvote.classList.contains("karma-voted")) {
+				karma.innerText = parseInt(karma.innerText) - 1
+			}
+			
 			upvote.classList.remove("karma-voted")
 			karma.innerText = parseInt(karma.innerText) - 1
 
-			await fetch("/"+comment.id+"/unvote")
-			await fetch("/"+comment.id+"/downvote")
+			await fetch("/api/comments/"+comment.id+"/unvote")
+			await fetch("/api/comments/"+comment.id+"/downvote")
 		}
 	})
 
@@ -159,7 +169,7 @@ $("#comment-post-button").addEventListener('click', async ()=>{
 		parentComment: replyingTo
 	}
 	
-	const response = await fetch("/upload-comment", {
+	const response = await fetch("/api/comments/upload-comment", {
 		method: "POST",
 		body: JSON.stringify(commentData),
 		headers: {
@@ -177,7 +187,7 @@ $("#comment-post-button").addEventListener('click', async ()=>{
 
 async function getComments() {
 	
-	const response = await fetch("comments")
+	const response = await fetch("/api/comments/" + window.location.pathname.split("/")[2])
 	const comments = await response.json()
 
 	const leftoverComments = comments
@@ -211,7 +221,7 @@ async function getComments() {
 // get users
 
 async function getUsers() {
-	const response = await fetch("/users")
+	const response = await fetch("/api/users")
 	const users = await response.json()
 
 	setInterval(()=>{
