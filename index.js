@@ -84,6 +84,8 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 			return finalString.slice(0,-28)
 		}
 
+		blogHtml = blogHtml.replaceAll("[blogId]", blogPost.id)
+		blogHtml = blogHtml.replaceAll("[desc]", blogPost.data.body.substring(0,50))
 		blogHtml = blogHtml.replaceAll("[title]", blogPost.data.title)
 		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
 		blogHtml = blogHtml.replaceAll("[tags]", blogPost.data.tags.join(" </span><span class=\"tag\">"))
