@@ -23,7 +23,7 @@ async function getBlogPosts() {
 			<p></p>
 			<a href="/blog/${blogPost.id}">Read</a>
 		</div>`
-		blogCard.lastElementChild.firstElementChild.innerText = blogPost.data.body.substring(0,300)+"..."
+		blogCard.lastElementChild.firstElementChild.innerHTML = marked.parse(blogPost.data.body.substring(0,500))+"..."
 		$("#blogs").appendChild(blogCard)
 	})
 }

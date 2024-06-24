@@ -18,6 +18,8 @@ const app = express()
 
 app.use(cookieParser())
 
+app.set("view engine", "ejs")
+
 showdown.setOption('strikethrough', true);
 
 app.use(async (req, res, next)=>{
@@ -59,11 +61,6 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 		}
 	})
 
-	let blogHtml = fs.readFileSync(
-		"templates/blog.html",
-		{ "encoding":"utf-8" }
-	)
-
 	function convertUnicodeToHtmlSafe(html) {
 		return html.replaceAll(/[\u00A0-\u2666]/g, function(c) {
 			 return '&#'+c.charCodeAt(0)+';';
@@ -76,31 +73,19 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 			return
 		}
 
-		function editsToString(edits) {
-			let finalString = ""
-			edits.forEach((element)=>{
-				finalString += element.author + "</span> @ <span class='edit-date'>" + new Date(element.dateEdited.seconds * 1000).toISOString() + "</span>, <span class='edit-author user-replace'>"
-			})
-			return finalString.slice(0,-28)
-		}
-
-		blogHtml = blogHtml.replaceAll("[blogId]", blogPost.id)
-		blogHtml = blogHtml.replaceAll("[desc]", blogPost.data.body.substring(0,50))
-		blogHtml = blogHtml.replaceAll("[title]", blogPost.data.title)
-		blogHtml = blogHtml.replaceAll("[author]", blogPost.data.author)
-		blogHtml = blogHtml.replaceAll("[tags]", blogPost.data.tags.join(" </span><span class=\"tag\">"))
-		blogHtml = blogHtml.replaceAll("[date]", new Date(blogPost.data.dateCreated.seconds * 1000).toISOString())
-		blogHtml = blogHtml.replaceAll("[edits]", blogPost.data.edits ? editsToString(blogPost.data.edits): "")
-
 		let converter = new showdown.Converter()
 		let html = converter.makeHtml(blogPost.data.body)
 
-		html = convertUnicodeToHtmlSafe(html)
-
-		blogHtml = blogHtml.replaceAll("[body]", html)
-
-		res.write(blogHtml)
-		res.end()
+		res.render('blog.ejs', {
+			blogId: blogPost.id,
+			desc: blogPost.data.body.substring(0,50),
+			title: blogPost.data.title,
+			author: blogPost.data.author,
+			tags: blogPost.data.tags,
+			body: convertUnicodeToHtmlSafe(html),
+			edits: blogPost.data.edits,
+			date: new Date(blogPost.data.dateCreated.seconds * 1000)
+		})
 
 		return
 	}
