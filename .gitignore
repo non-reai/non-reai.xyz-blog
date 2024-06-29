@@ -3,3 +3,4 @@ node_modules/
 replit.nix
 .env
 databaseUpdater.js
+cert.json

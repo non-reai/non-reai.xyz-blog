@@ -8,7 +8,7 @@ async function getBlogPosts() {
 	$("#blogs").firstElementChild.remove()
 
 	data.sort((a, b)=>{
-		return (b.data.dateCreated.seconds - a.data.dateCreated.seconds)
+		return (b.dateCreated.seconds - a.dateCreated.seconds)
 	})
 	
 	data.forEach(blogPost=>{
@@ -16,36 +16,55 @@ async function getBlogPosts() {
 		blogCard.classList.add("blog-card")
 		blogCard.innerHTML = `
 		<div class="head">
-			<h1>${blogPost.data.title}</h1>
-			<h4><span class="user-replace">${blogPost.data.author}</span> - <span>${new Date(blogPost.data.dateCreated.seconds * 1000).toLocaleString(Navigator.language, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span></h4>
+			<h1>${blogPost.title}</h1>
+			<h4><span class="user-replace">${blogPost.author}</span> - <span>${new Date(blogPost.dateCreated.seconds * 1000).toLocaleString(Navigator.language, { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone })}</span></h4>
 		</div>
 		<div class="body">
 			<p></p>
 			<a href="/blog/${blogPost.id}">Read</a>
 		</div>`
-		blogCard.lastElementChild.firstElementChild.innerHTML = marked.parse(blogPost.data.body.substring(0,500))+"..."
+		blogCard.lastElementChild.firstElementChild.innerHTML = marked.parse(blogPost.body.substring(0,500))+"..."
 		$("#blogs").appendChild(blogCard)
 	})
+
+	getUsers()
 }
 
 getBlogPosts()
 
 // get users
 
-async function getUsers() {
-	const response = await fetch("/api/users")
-	const users = await response.json()
-
-	setInterval(()=>{
-		document.querySelectorAll(".user-replace").forEach(element=>{
-			let user = users.find(user => {
-				return user.id == element.innerText
-			})
-			if (user) {
-				element.innerText = user.data.username
-			}
-		})
-	},100)
+function uniq(a) {
+	return a.sort().filter(function(item, pos, ary) {
+		return !pos || item != ary[pos - 1];
+	});
 }
 
-getUsers()
+async function getUsers() {
+	let usersNeedToQuery = []
+	
+	document.querySelectorAll(".user-replace").forEach(element=>{
+		console.log("hehehe")
+		usersNeedToQuery.push(element.innerText)
+	})
+
+	usersNeedToQuery = uniq(usersNeedToQuery)
+	
+	console.log("/api/users?id="+usersNeedToQuery.join("&id="))
+	const response = await fetch("/api/users?id="+usersNeedToQuery.join("&id="))
+	const users = await response.json()
+
+	console.log(users)
+
+	document.querySelectorAll(".user-replace").forEach(element=>{
+		let user = users.find(user => {
+			if (!user) {
+				return
+			}
+			return user.id == element.innerText
+		})
+		if (user) {
+			element.innerText = user.username
+		}
+	})
+}

@@ -1,15 +1,31 @@
 import express from 'express'
 import crypto from 'crypto'
-import { readDoc, writeDoc, whereif } from "./../firestore.js"
+import { readDoc, writeDoc, queryCollection, where } from "./../firestore.js"
 
 const router = express.Router()
 
 router.get("/", async (req, res)=>{
 	// const limit = req.query.limit || 	100
 	// const page = req.query.page || 1
+	if (!req.query.id) {
+		res.statusCode = 400
+		res.end("No query id")
+		return
+	}
 
-	let users = await readDoc("users")
+	let users = []
 
+	if (typeof req.query.id != "object") {
+		users.push(await readDoc("users", req.query.id))
+		res.end(JSON.stringify(users, null, 2))
+		return
+	}
+
+	for (let i = 0; i < req.query.id.length; i++) {
+		console.log(req.query.id[i])
+		users.push(await readDoc("users", req.query.id[i]))
+	}
+	
 	// blogPosts.slice(page * limit,page * limit + limit)
 
 	res.end(JSON.stringify(users, null, 2))
@@ -24,11 +40,7 @@ router.get("/:userId", async (req, res, next)=>{
 		return
 	}
 
-	let users = await readDoc("users")
-
-	users = users.filter((user)=>{
-		return user.id == req.params.userId
-	})
+	let users = await readDoc("users", req.params.userId)
 
 	if (!users.length > 0) {
 		res.statusCode = 404
@@ -52,7 +64,7 @@ router.post("/signup", async (req, res)=>{
 		return
 	}
 	
-	let users = await readDoc("users", whereif("lowerUsername", "==", req.body.username.toLowerCase()))
+	let users = await queryCollection("users", where("lowerUsername", "==", req.body.username.toLowerCase()))
 
 	if (users.length > 0) {
 		res.statusCode = 409
@@ -94,7 +106,7 @@ router.post("/login", async (req, res)=>{
 		return
 	}
 
-	let users = await readDoc("users", whereif("lowerUsername", "==", req.body.username.toLowerCase()))
+	let users = await queryCollection("users", where("lowerUsername", "==", req.body.username.toLowerCase()))
 
 	if (!users.length > 0) {
 		res.statusCode = 404
@@ -102,9 +114,9 @@ router.post("/login", async (req, res)=>{
 		return
 	}
 
-	const hash = crypto.createHash("sha256").update(req.body.password + (users[0].data.salt || "")).digest("hex")
+	const hash = crypto.createHash("sha256").update(req.body.password + (users[0].salt || "")).digest("hex")
 
-	if (users[0].data.password != hash) {
+	if (users[0].password != hash) {
 		res.statusCode = 401
 		res.end("Password does not match.")
 		return

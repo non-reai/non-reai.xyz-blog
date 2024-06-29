@@ -1,5 +1,5 @@
 import express from 'express'
-import { readDoc, writeDoc, whereif } from "./../firestore.js"
+import { readDoc, writeDoc, queryCollection } from "./../firestore.js"
 import { createCanvas, registerFont } from 'canvas'
 
 const router = express.Router()
@@ -8,7 +8,7 @@ router.get("/", async (req, res)=>{
 	// const limit = req.query.limit || 	100
 	// const page = req.query.page || 1
 
-	let blogPosts = await readDoc("blog-posts")
+	let blogPosts = await queryCollection("blog-posts")
 
 	// blogPosts.slice(page * limit,page * limit + limit)
 
@@ -18,15 +18,7 @@ router.get("/", async (req, res)=>{
 router.get("/cover-image/:blogId", async (req, res)=>{
 	let blogId = req.params.blogId
 
-	let blogPost = null
-
-	let blogPosts = await readDoc("blog-posts")
-
-	blogPosts.forEach(blogPostQueried=>{
-		if (blogPostQueried.id == blogId) {
-			blogPost = blogPostQueried
-		}
-	})
+	let blogPost = await readDoc("blog-posts", blogId)
 
 	if (!blogPost) {
 		res.statusCode = 404
@@ -34,11 +26,7 @@ router.get("/cover-image/:blogId", async (req, res)=>{
 		return
 	}
 
-	let users = await readDoc("users")
-
-	let user = users.filter((user)=>{
-		return user.id == blogPost.data.author
-	})[0]
+	let user = await readDoc("users", blogPost.author)
 
 	function wrapLines(text) {
 		return getLines(text, 1550).join("\n")
@@ -74,18 +62,18 @@ router.get("/cover-image/:blogId", async (req, res)=>{
 	ctx.font = "bold 4rem Arial";
 	ctx.fillStyle = "black";
 
-	ctx.fillText(wrapLines(blogPost.data.title), 50, 220);
+	ctx.fillText(wrapLines(blogPost.title), 50, 220);
 
 	ctx.font = "bold 2rem Arial";
 	ctx.fillStyle = "black";
 
 	ctx.fillText("blog.non-reai.xyz", 50, 75);
 
-	ctx.fillText("by " + user.data.username, 50, 415);
+	ctx.fillText("by " + user.username, 50, 415);
 
 	ctx.font = "1rem Arial";	
 
-	ctx.fillText(wrapLines(blogPost.data.body), 50, 575);
+	ctx.fillText(wrapLines(blogPost.body), 50, 575);
 
 	const image = canvas.toBuffer("image/png")
 

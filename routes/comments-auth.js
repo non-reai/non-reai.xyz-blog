@@ -1,5 +1,5 @@
 import express from 'express'
-import { readDoc, writeDoc, whereif } from "./../firestore.js"
+import { readDoc, writeDoc } from "./../firestore.js"
 
 const router = express.Router()
 
@@ -32,17 +32,9 @@ router.post('/upload-comment',async (req,res)=>{
 router.get('/:commentId/upvote',async (req,res)=>{
 	let commentId = req.params.commentId
 	
-	let comments = await readDoc("comments")
+	let comment = await readDoc("comments", commentId)
 
-	let comment = comments.filter(comment=>{
-		return comment.id == commentId
-	})[0]
-
-	let users = await readDoc("users")
-
-	let user = users.filter(user=>{
-		return user.id == comment.data.author
-	})[0]
+	let user = await readDoc("users" , comment.author)
 
 	if (!comment) {
 		res.statusCode = 404
@@ -50,30 +42,30 @@ router.get('/:commentId/upvote',async (req,res)=>{
 		return
 	}
 
-	if (comment.data.karma.upvotes.includes(res.locals.user.id)) {
+	if (comment.karma.upvotes.includes(res.locals.user.id)) {
 		res.statusCode = 409
 		res.end()
 		return
 	}
 
-	comment.data.karma.upvotes.push(res.locals.user.id)
-	user.data.karma++
+	comment.karma.upvotes.push(res.locals.user.id)
+	user.karma++
 
-	if (comment.data.karma.downvotes.includes(res.locals.user.id)) {
-		let index = comment.data.karma.downvotes.indexOf(res.locals.user.id)
-		comment.data.karma.downvotes.splice(index,1)
+	if (comment.karma.downvotes.includes(res.locals.user.id)) {
+		let index = comment.karma.downvotes.indexOf(res.locals.user.id)
+		comment.karma.downvotes.splice(index,1)
 	}
 	
 	await writeDoc(
 		"comments", 
 		commentId,
-		comment.data
+		comment
 	)
 
 	await writeDoc(
 		"users", 
 		user.id,
-		user.data
+		user
 	)
 
 	res.end("Upvoted")
@@ -82,17 +74,9 @@ router.get('/:commentId/upvote',async (req,res)=>{
 router.get('/:commentId/downvote',async (req,res)=>{
 	let commentId = req.params.commentId
 	
-	let comments = await readDoc("comments")
+	let comment = await readDoc("comments", commentId)
 
-	let comment = comments.filter(comment=>{
-		return comment.id == commentId
-	})[0]
-
-	let users = await readDoc("users")
-
-	let user = users.filter(user=>{
-		return user.id == comment.data.author
-	})[0]
+	let user = await readDoc("users" , comment.author)
 
 	if (!comment) {
 		res.statusCode = 404
@@ -100,30 +84,30 @@ router.get('/:commentId/downvote',async (req,res)=>{
 		return
 	}
 
-	if (comment.data.karma.downvotes.includes(res.locals.user.id)) {
+	if (comment.karma.downvotes.includes(res.locals.user.id)) {
 		res.statusCode = 409
 		res.end()
 		return
 	}
 
-	comment.data.karma.downvotes.push(res.locals.user.id)
-	user.data.karma--
+	comment.karma.downvotes.push(res.locals.user.id)
+	user.karma--
 
-	if (comment.data.karma.upvotes.includes(res.locals.user.id)) {
-		let index = comment.data.karma.upvotes.indexOf(res.locals.user.id)
-		comment.data.karma.upvotes.splice(index,1)
+	if (comment.karma.upvotes.includes(res.locals.user.id)) {
+		let index = comment.karma.upvotes.indexOf(res.locals.user.id)
+		comment.karma.upvotes.splice(index,1)
 	}
 	
 	await writeDoc(
 		"comments", 
 		commentId,
-		comment.data
+		comment
 	)
 
 	await writeDoc(
 		"users", 
 		user.id,
-		user.data
+		user
 	)
 
 	res.end("Downvoted")
@@ -132,17 +116,9 @@ router.get('/:commentId/downvote',async (req,res)=>{
 router.get('/:commentId/unvote',async (req,res)=>{
 	let commentId = req.params.commentId
 	
-	let comments = await readDoc("comments")
+	let comment = await readDoc("comments", commentId)
 
-	let comment = comments.filter(comment=>{
-		return comment.id == commentId
-	})[0]
-
-	let users = await readDoc("users")
-
-	let user = users.filter(user=>{
-		return user.id == comment.data.author
-	})[0]
+	let user = await readDoc("users" , comment.author)
 
 	console.log(user)
 
@@ -152,28 +128,28 @@ router.get('/:commentId/unvote',async (req,res)=>{
 		return
 	}
 	
-	if (comment.data.karma.downvotes.includes(res.locals.user.id)) {
-		let index = comment.data.karma.downvotes.indexOf(res.locals.user.id)
-		comment.data.karma.downvotes.splice(index,1)
-		user.data.karma++
+	if (comment.karma.downvotes.includes(res.locals.user.id)) {
+		let index = comment.karma.downvotes.indexOf(res.locals.user.id)
+		comment.karma.downvotes.splice(index,1)
+		user.karma++
 	}
 
-	if (comment.data.karma.upvotes.includes(res.locals.user.id)) {
-		let index = comment.data.karma.upvotes.indexOf(res.locals.user.id)
-		comment.data.karma.upvotes.splice(index,1)
-		user.data.karma--
+	if (comment.karma.upvotes.includes(res.locals.user.id)) {
+		let index = comment.karma.upvotes.indexOf(res.locals.user.id)
+		comment.karma.upvotes.splice(index,1)
+		user.karma--
 	}
 	
 	await writeDoc(
 		"comments", 
 		commentId,
-		comment.data
+		comment
 	)
 
 	await writeDoc(
 		"users", 
 		user.id,
-		user.data
+		user
 	)
 
 	res.end("Unvoted")

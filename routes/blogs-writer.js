@@ -1,20 +1,12 @@
 import express from 'express'
-import { readDoc, writeDoc, whereif } from "./../firestore.js"
+import { readDoc, writeDoc } from "./../firestore.js"
 
 const router = express.Router()
 
 router.post("/upload-blog", async (req, res)=>{
 	let blogId = req.body.id
-	
-	let blogPost = null
-	
-	let blogPosts = await readDoc("blog-posts")
-
-	blogPosts.forEach(blogPostQueried=>{
-		if (blogPostQueried.id == blogId) {
-			blogPost = blogPostQueried
-		}
-	})
+		
+	let blogPost = await readDoc("blog-posts", blogId)
 
 	if (!blogPost) {
 		blogId = Math.random().toString().substring(2,10)
@@ -35,10 +27,10 @@ router.post("/upload-blog", async (req, res)=>{
 	if (blogPost) {
 		blogPostData = {
 			title: req.body.title,
-			author:  blogPost.data.author,
-			dateCreated: blogPost.data.dateCreated,
+			author:  blogPost.author,
+			dateCreated: blogPost.dateCreated,
 			edited: true,
-			edits: blogPost.data.edits ? blogPost.data.edits.concat({
+			edits: blogPost.edits ? blogPost.edits.concat({
 				author: res.locals.user.id,
 				dateEdited: new Date(),
 			}) : [
@@ -49,8 +41,8 @@ router.post("/upload-blog", async (req, res)=>{
 			],
 			tags: req.body.tags,
 			body: req.body.body,
-			karma: blogPost.data.karma || 0,
-			views: blogPost.data.views || 0,
+			karma: blogPost.karma || 0,
+			views: blogPost.views || 0,
 		}
 	}
 	

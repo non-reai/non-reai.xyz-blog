@@ -18,6 +18,9 @@ $("#submit").addEventListener("click", async ()=>{
 		$("#status").style.color = "#f54b42"
 	} else {
 		$("#status").style.color = "#4ef542"
+		setTimeout(()=>{
+			window.location.replace("/")
+		},500)
 	}
 
 	$("#status").innerText = await response.text()

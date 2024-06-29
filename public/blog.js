@@ -33,7 +33,7 @@ getUser().then(()=>{
 let replyingTo = null
 
 function createComment(comment) {
-	if (comment.data.parentComment && !$("#comment-"+comment.data.parentComment)) {
+	if (comment.parentComment && !$("#comment-"+comment.parentComment)) {
 		return false
 	}
 
@@ -41,19 +41,19 @@ function createComment(comment) {
 	container.classList.add("comment")
 	container.id = "comment-"+comment.id
 	
-	if (comment.data.parentComment == null) {
+	if (comment.parentComment == null) {
 		$("#comments").appendChild(container)
 	} else {
-		$("#comment-"+comment.data.parentComment+" > div").appendChild(container)
+		$("#comment-"+comment.parentComment+" > div").appendChild(container)
 	}
 
 	const author = document.createElement("h2")
-	author.innerText = comment.data.author
+	author.innerText = comment.author
 	author.classList.add("user-replace")
 	container.appendChild(author)
 
 	const dateCreated = document.createElement("span")
-	dateCreated.innerText = new Date(comment.data.dateCreated.seconds * 1000).toLocaleString()
+	dateCreated.innerText = new Date(comment.dateCreated.seconds * 1000).toLocaleString()
 	dateCreated.classList.add("comment-date")
 	container.appendChild(dateCreated)
 
@@ -61,7 +61,7 @@ function createComment(comment) {
 	container.appendChild(content)
 
 	const body = document.createElement("p")
-	body.innerText = comment.data.body
+	body.innerText = comment.body
 	content.appendChild(body)
 
 	const interact = document.createElement("div")
@@ -70,7 +70,7 @@ function createComment(comment) {
 
 	if (!user) {
 		const karma = document.createElement("span")
-		karma.innerText = comment.data.karma.upvotes.length - comment.data.karma.downvotes.length
+		karma.innerText = comment.karma.upvotes.length - comment.karma.downvotes.length
 		interact.appendChild(karma)
 
 		return true
@@ -81,7 +81,7 @@ function createComment(comment) {
 	interact.appendChild(upvote)
 
 	const karma = document.createElement("span")
-	karma.innerText = comment.data.karma.upvotes.length - comment.data.karma.downvotes.length
+	karma.innerText = comment.karma.upvotes.length - comment.karma.downvotes.length
 	interact.appendChild(karma)
 
 	const downvote = document.createElement("a")
@@ -92,10 +92,10 @@ function createComment(comment) {
 	reply.innerText = "Reply"
 	interact.appendChild(reply)
 
-	if (comment.data.karma.upvotes.includes(user.id)) {
+	if (comment.karma.upvotes.includes(user.id)) {
 		upvote.classList.add("karma-voted")
 		downvote.classList.remove("karma-voted")
-	} else if (comment.data.karma.downvotes.includes(user.id)) {
+	} else if (comment.karma.downvotes.includes(user.id)) {
 		downvote.classList.add("karma-voted")
 		upvote.classList.remove("karma-voted")
 	}
@@ -144,8 +144,8 @@ function createComment(comment) {
 
 	reply.addEventListener('click', ()=>{
 		replyingTo = comment.id
-		$("#comment-replyto").innerText = "Replying to "+comment.data.author
-		$("#comment-replyto-content").innerText = comment.data.body
+		$("#comment-replyto").innerText = "Replying to "+comment.author
+		$("#comment-replyto-content").innerText = comment.body
 		$(".comment-input").focus()
 	})
 
@@ -215,26 +215,44 @@ async function getComments() {
 			setTimeout(res)
 		})
 	}
+
+	getUsers()
 }
 
 
 // get users
 
-async function getUsers() {
-	const response = await fetch("/api/users")
-	const users = await response.json()
-
-	setInterval(()=>{
-		
-		document.querySelectorAll(".user-replace").forEach(element=>{
-			let user = users.find(user => {
-				return user.id == element.innerText
-			})
-			if (user) {
-				element.innerText = user.data.username
-			}
-		})
-	},100)
+function uniq(a) {
+	return a.sort().filter(function(item, pos, ary) {
+		return !pos || item != ary[pos - 1];
+	});
 }
 
-getUsers()
+
+async function getUsers() {
+	let usersNeedToQuery = []
+
+	document.querySelectorAll(".user-replace").forEach(element=>{
+		usersNeedToQuery.push(element.innerText)
+	})
+
+	usersNeedToQuery = uniq(usersNeedToQuery)
+
+	console.log("/api/users?id="+usersNeedToQuery.join("&id="))
+	const response = await fetch("/api/users?id="+usersNeedToQuery.join("&id="))
+	const users = await response.json()
+
+	console.log(users)
+
+	document.querySelectorAll(".user-replace").forEach(element=>{
+		let user = users.find(user => {
+			if (!user) {
+				return
+			}
+			return user.id == element.innerText
+		})
+		if (user) {
+			element.innerText = user.username
+		}
+	})
+}

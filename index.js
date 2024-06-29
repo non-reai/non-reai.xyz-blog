@@ -4,11 +4,10 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 import express from 'express'
-import fs from 'fs'
 import showdown from 'showdown'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
-import { readDoc, writeDoc, whereif } from "./firestore.js"
+import { readDoc, writeDoc, where, queryCollection } from "./firestore.js"
 
 import api from './routes/api.js'
 
@@ -24,14 +23,14 @@ showdown.setOption('strikethrough', true);
 
 app.use(async (req, res, next)=>{
 	if (req.cookies["session-id"]) {
-		let sessionIds = await readDoc("session-ids", whereif("sessionId", "==", req.cookies["session-id"]))
+		let sessionIds = await queryCollection("session-ids", where("sessionId", "==", req.cookies["session-id"]))
 
 		if (!(sessionIds.length > 0)) {
 			next()
 			return
 		}
 
-		const users = await readDoc("users", whereif("lowerUsername", "==", sessionIds[0].data.lowerUsername))
+		const users = await queryCollection("users", where("lowerUsername", "==", sessionIds[0].lowerUsername))
 
 		if (!users[0]) {
 			next()
@@ -50,16 +49,8 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 	let slug = req.params.slug
 
 	console.log(blogId, slug)
-
-	let blogPost = null
 	
-	let blogPosts = await readDoc("blog-posts")
-
-	blogPosts.forEach(blogPostQueried=>{
-		if (blogPostQueried.id == blogId) {
-			blogPost = blogPostQueried
-		}
-	})
+	let blogPost = await readDoc("blog-posts", blogId)
 
 	function convertUnicodeToHtmlSafe(html) {
 		return html.replaceAll(/[\u00A0-\u2666]/g, function(c) {
@@ -68,23 +59,23 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 	}
 
 	if (blogPost) {
-		if (!slug || slug != blogPost.data.title.replaceAll(" ","-")) {
-			res.redirect("/blog/"+blogId+"/"+encodeURIComponent(blogPost.data.title.replaceAll(" ","-")))
+		if (!slug || slug != blogPost.title.replaceAll(" ","-")) {
+			res.redirect("/blog/"+blogId+"/"+encodeURIComponent(blogPost.title.replaceAll(" ","-")))
 			return
 		}
 
 		let converter = new showdown.Converter()
-		let html = converter.makeHtml(blogPost.data.body)
+		let html = converter.makeHtml(blogPost.body)
 
 		res.render('blog.ejs', {
 			blogId: blogPost.id,
-			desc: blogPost.data.body.substring(0,50),
-			title: blogPost.data.title,
-			author: blogPost.data.author,
-			tags: blogPost.data.tags,
+			desc: blogPost.body.substring(0,50),
+			title: blogPost.title,
+			author: blogPost.author,
+			tags: blogPost.tags,
 			body: convertUnicodeToHtmlSafe(html),
-			edits: blogPost.data.edits,
-			date: new Date(blogPost.data.dateCreated.seconds * 1000)
+			edits: blogPost.edits,
+			date: new Date(blogPost.dateCreated.seconds * 1000)
 		})
 
 		return
@@ -97,16 +88,9 @@ app.get("/blog/:blogId/:slug?", async (req, res)=>{
 app.get("/blog-raw/:blogId", async (req, res)=>{
 	let blogId = req.params.blogId
 
-	let blogPost = null
 	
-	let blogPosts = await readDoc("blog-posts")
-
-	blogPosts.forEach(blogPostQueried=>{
-		if (blogPostQueried.id == blogId) {
-			blogPost = blogPostQueried
-		}
-	})
-
+	let blogPost = await readDoc("blog-posts", blogId) 
+	
 	if (blogPost) {
 		res.write(JSON.stringify(blogPost, null, 2))
 		res.end()
@@ -129,7 +113,7 @@ app.use((req, res, next)=>{
 })
 
 app.use((req, res, next)=>{
-	if (res.locals.user.data.isWriter) {
+	if (res.locals.user.isWriter) {
 		next()
 	} else {
 		res.statusCode = 403

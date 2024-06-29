@@ -1,5 +1,5 @@
 import express from 'express'
-import { readDoc, writeDoc, whereif } from "./../firestore.js"
+import { readDoc, writeDoc } from "./../firestore.js"
 
 const router = express.Router()
 

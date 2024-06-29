@@ -32,7 +32,7 @@ router.use('/users', usersAuth)
 // Below is writers only.
 
 router.use((req, res, next)=>{
-	if (res.locals.user.data.isWriter) {
+	if (res.locals.user.isWriter) {
 		next()
 	} else {
 		res.statusCode = 403

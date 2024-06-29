@@ -1,61 +1,85 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, collection, query, getDocs, getDoc, where} from "firebase/firestore"
-import dotenv from 'dotenv'
+import { initializeApp, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore"
 
-dotenv.config()
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+const app = initializeApp({
+	credential: cert('./cert.json'),
+});
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-	apiKey: process.env['API_KEY'],
-	authDomain: process.env['AUTH_DOMAIN'],
-	projectId: process.env['PROJECT_ID'],
-	storageBucket: process.env['STORAGE_BUCKET'],
-	messagingSenderId: process.env['MESSAGING_SENDER_ID'],
-	appId: process.env['APP_ID'],
-	measurementId: process.env['MEASUREMENT_ID']
-};
+const db = getFirestore(app)
 
-const databaseCache = {}
+export function where(field, operator, value) {
+	return [
+		field,
+		operator,
+		value
+	]
+}
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const firestoreDb = getFirestore(app)
-
-export async function readDoc(collectionName, ...queryArgs) {
+export async function queryCollection(collectionName) {
 	try {
-		const collectionRef = collection(firestoreDb, collectionName)
+		const collectionRef = db.collection(collectionName)
 		const data = []
-		const q = query(collectionRef, ...queryArgs)
+		let q = collectionRef
 
-		const docSnap = await getDocs(q)
+		for (let i = 1; i < arguments.length; i++) {
+			q = q.where(arguments[i][0],arguments[i][1],arguments[i][2])
+		}
+
+		const docSnap = await q.get()
 
 		docSnap.forEach(doc=>{
+			let docData = doc.data()
+			docData = JSON.parse(JSON.stringify(docData).replaceAll("_seconds", "seconds").replaceAll("_nanoseconds", "nanoseconds"))
 			data.push({
 				id: doc.id,
-				data: doc.data()
+				...docData
 			})
 		})
-		console.log("read firestore")
 		return data
 	} catch (err) {
-		console.log("error read firestore")
-		return err.toString()
+		console.log(err)
+		return err
+	}
+}
+
+export async function readDoc(collectionName, documentId) {
+	try {
+		const docRef = db.collection(collectionName).doc(documentId)
+		const docData = await docRef.get()
+
+		if (!docData.exists) {
+			return null
+		}
+
+		const data = {
+			id: docData.id,
+			...docData.data()
+		}
+		return data
+	} catch (err) {
+		console.log(err)
+		return err
 	}
 }
 
 export async function writeDoc(collectionName, documentId, data) {
 	try {
-		const document = doc(firestoreDb, collectionName, documentId)
-		await setDoc(document, data)
-		console.log("write firestore")
+		const docRef = db.collection(collectionName).doc(documentId)
+		await docRef.set(data)
 		return true
 	} catch (err) {
-		console.log("error write firestore: "+err)
-		return false
+		console.log(err)
+		return err
 	}
 }
 
-export const whereif = where
+export async function updateDoc(collectionName, documentId, data) {
+	try {
+		const docRef = db.collection(collectionName).doc(documentId)
+		await docRef.set(data, { merge: true })
+		return true
+	} catch (err) {
+		console.log(err)
+		return err
+	}
+}

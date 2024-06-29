@@ -55,9 +55,9 @@ $("#load").addEventListener("click", async ()=>{
 
 	if (response.status == "200") {
 		const json = await response.json()
-		simplemde.value(json.data.body)
-		$("#title").value = json.data.title
-		$("#tags").value = json.data.tags.join(",")
+		simplemde.value(json.body)
+		$("#title").value = json.title
+		$("#tags").value = json.tags.join(",")
 	}
 })
 
