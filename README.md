@@ -1,1 +1,1 @@
-[the method](http://tsmyvnc.lucilasol.com/)
+[the method](http://tsmyvnc.lucilasol.com/vncws)
